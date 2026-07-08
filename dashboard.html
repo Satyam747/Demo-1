@@ -9,32 +9,33 @@
         body { background-color: #05070f; color: #f1f5f9; font-family: system-ui, sans-serif; padding: 1.5rem; }
         .dashboard-container { max-width: 50rem; margin: 0 auto; }
         
-        /* 1. EXECUTIVE KPI GRID */
         .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .card-kpi { background:#0b0f19; border:1px solid #1e2640; padding:15px; border-radius:10px; text-align:center; }
         
-        /* 2. OPERATIONAL FEED */
         header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e2640; padding-bottom: 1rem; margin-bottom: 1.5rem; }
         .order-terminal-card { background-color: #0b0f19; border: 1px solid #1e2640; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; }
         .badge-table { background-color: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #c5a880; padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; }
-        .btn-print-action { background-color: #3b82f6; color: #ffffff; border: none; padding: 0.8rem 1.2rem; border-radius: 0.5rem; cursor: pointer; }
+        .btn-print-action { background-color: #3b82f6; color: #ffffff; border: none; padding: 0.8rem 1.2rem; border-radius: 0.5rem; cursor: pointer; margin-top: 10px; }
+
+        /* TARGETED PRINTING CSS */
+        @media print {
+            body * { visibility: hidden; }
+            .print-active, .print-active * { visibility: visible; }
+            .print-active { position: absolute; left: 0; top: 0; width: 100%; border: none; }
+        }
     </style>
 </head>
 <body>
-
     <div class="dashboard-container">
-        <!-- EXECUTIVE ANALYTICS LAYER -->
         <div class="analytics-grid">
             <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">TOTAL REVENUE</p><h3 id="kpi-revenue" style="color:#38bdf8;">₹0</h3></div>
             <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">PEAK HOUR</p><h3 id="kpi-peak" style="color:#10b981;">--</h3></div>
             <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">AVG. TICKET</p><h3 id="kpi-avg" style="color:#c5a880;">₹0</h3></div>
         </div>
-
         <header>
             <h1>Digiconvo Executive POS</h1>
             <div style="color: #10b981;"><i class="fa-solid fa-circle-dot"></i> Live Feed</div>
         </header>
-
         <main id="terminal-feed-wrapper"></main>
     </div>
 
@@ -43,42 +44,46 @@
 
         function fetchTerminalFeed() {
             fetch(CLOUD_API_ENDPOINT)
-                .then(response => response.json())
-                .then(cloudOrders => {
-                    if (!cloudOrders || cloudOrders.length === 0) return;
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || data.length === 0) return;
 
-                    // --- ANALYTICS ENGINE ---
                     let totalRev = 0;
                     let hourCounts = {};
-                    cloudOrders.forEach(o => {
+                    data.forEach(o => {
                         totalRev += parseFloat(o.total) || 0;
-                        // Extract hour from timestamp
-                        let hr = new Date(o.timestamp).getHours();
+                        let hr = new Date("1970-01-01 " + o.timestamp).getHours();
                         hourCounts[hr] = (hourCounts[hr] || 0) + 1;
                     });
                     
-                    let peakHour = Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b);
-
-                    // Update UI
+                    let peakHour = Object.keys(hourCounts).length > 0 ? Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b) : "--";
                     document.getElementById('kpi-revenue').innerText = "₹" + totalRev.toLocaleString();
-                    document.getElementById('kpi-peak').innerText = peakHour + ":00";
-                    document.getElementById('kpi-avg').innerText = "₹" + (totalRev / cloudOrders.length).toFixed(0);
+                    document.getElementById('kpi-peak').innerText = peakHour !== "--" ? peakHour + ":00" : "--";
+                    document.getElementById('kpi-avg').innerText = "₹" + (totalRev / data.length).toFixed(0);
 
-                    // --- ORDER FEED ---
                     const feed = document.getElementById('terminal-feed-wrapper');
                     feed.innerHTML = "";
-                    cloudOrders.reverse().forEach(order => {
+                    data.reverse().forEach(order => {
+                        const cardId = "card-" + order.id;
                         feed.innerHTML += `
-                            <div class="order-terminal-card">
+                            <div class="order-terminal-card" id="${cardId}">
                                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                                     <span class="badge-table">Table ${order.table}</span>
                                     <span style="font-weight:800; color:#10b981;">₹${order.total}</span>
                                 </div>
                                 <div style="font-weight:700; margin-bottom:5px;">Guest: ${order.guest}</div>
-                                <button class="btn-print-action" onclick="window.print()">Print KOT</button>
+                                <pre style="font-size: 0.7rem; color: #94a3b8;">${order.rawKot}</pre>
+                                <button class="btn-print-action" onclick="printCard('${cardId}')">Print KOT</button>
                             </div>`;
                     });
                 });
+        }
+
+        function printCard(id) {
+            const card = document.getElementById(id);
+            card.classList.add('print-active');
+            window.print();
+            card.classList.remove('print-active');
         }
 
         window.onload = () => { fetchTerminalFeed(); setInterval(fetchTerminalFeed, 7000); };
