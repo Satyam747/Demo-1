@@ -2,201 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Counter Terminal | Operational Dashboard</title>
-    <!-- FontAwesome Icons -->
+    <title>Executive Terminal | The Velvet Lounge</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        /* LUXURY SYSTEM TERMINAL SKIN CORE */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            background-color: #05070f;
-            color: #f1f5f9;
-            font-family: system-ui, -apple-system, sans-serif;
-            padding: 1.5rem;
-        }
-        .dashboard-container {
-            max-width: 50rem;
-            margin: 0 auto;
-        }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1e2640;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        h1 { font-size: 1.5rem; color: #ffffff; font-weight: 800; }
-        .live-status { font-size: 0.85rem; color: #10b981; font-weight: 700; }
-
-        /* ACTIVE CARDS GRID CONTAINER */
-        .orders-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
-        }
-        .order-terminal-card {
-            background-color: #0b0f19;
-            border: 1px solid #1e2640;
-            border-radius: 1rem;
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .card-meta-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed #1e2640;
-            padding-bottom: 0.75rem;
-        }
-        .badge-table {
-            background-color: rgba(197, 168, 128, 0.15);
-            border: 1px solid #c5a880;
-            color: #c5a880;
-            font-weight: 800;
-            padding: 0.25rem 0.6rem;
-            border-radius: 0.5rem;
-            font-size: 0.85rem;
-        }
-        .btn-print-action {
-            background-color: #3b82f6;
-            color: #ffffff;
-            border: none;
-            padding: 0.8rem 1.2rem;
-            border-radius: 0.5rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: background 0.2s;
-        }
-        .btn-print-action:hover { background-color: #2563eb; }
-
-        .empty-state {
-            text-align: center;
-            padding: 5rem 2rem;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        /* =================================================== */
-        /* 🖨️ HARDWARE HARD-WIRED MEDIA PRINTING EMULATOR ENGINE */
-        /* =================================================== */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #hidden-print-buffer, #hidden-print-buffer * {
-                visibility: visible;
-            }
-            #hidden-print-buffer {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm; /* Standard thermal receipt dimensions width criteria */
-                color: #000000;
-                background-color: #ffffff;
-                font-family: 'Courier New', Courier, monospace;
-                font-size: 12px;
-                line-height: 1.2;
-                white-space: pre-wrap;
-                margin: 0;
-                padding: 0;
-            }
-        }
+        body { background-color: #05070f; color: #f1f5f9; font-family: system-ui, sans-serif; padding: 1.5rem; }
+        .dashboard-container { max-width: 50rem; margin: 0 auto; }
+        
+        /* 1. EXECUTIVE KPI GRID */
+        .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .card-kpi { background:#0b0f19; border:1px solid #1e2640; padding:15px; border-radius:10px; text-align:center; }
+        
+        /* 2. OPERATIONAL FEED */
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e2640; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .order-terminal-card { background-color: #0b0f19; border: 1px solid #1e2640; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; }
+        .badge-table { background-color: rgba(197, 168, 128, 0.15); border: 1px solid #c5a880; color: #c5a880; padding: 0.25rem 0.6rem; border-radius: 0.5rem; font-size: 0.85rem; }
+        .btn-print-action { background-color: #3b82f6; color: #ffffff; border: none; padding: 0.8rem 1.2rem; border-radius: 0.5rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
+        <!-- EXECUTIVE ANALYTICS LAYER -->
+        <div class="analytics-grid">
+            <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">TOTAL REVENUE</p><h3 id="kpi-revenue" style="color:#38bdf8;">₹0</h3></div>
+            <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">PEAK HOUR</p><h3 id="kpi-peak" style="color:#10b981;">--</h3></div>
+            <div class="card-kpi"><p style="color:#64748b; font-size:0.7rem;">AVG. TICKET</p><h3 id="kpi-avg" style="color:#c5a880;">₹0</h3></div>
+        </div>
+
         <header>
-            <div>
-                <h1>Digiconvo Live Counter POS</h1>
-                <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem;">Active Shopkeeper Terminal Monitoring Stream</p>
-            </div>
-            <div class="live-status"><i class="fa-solid fa-circle-dot"></i> Monitoring Feed Live</div>
+            <h1>Digiconvo Executive POS</h1>
+            <div style="color: #10b981;"><i class="fa-solid fa-circle-dot"></i> Live Feed</div>
         </header>
 
-        <main class="orders-grid" id="terminal-feed-wrapper">
-            <!-- Order Real-time Data Output Maps Natively Inside Here -->
-        </main>
+        <main id="terminal-feed-wrapper"></main>
     </div>
-
-    <!-- PRINT BUFFER SHIELD NODE -->
-    <pre id="hidden-print-buffer"></pre>
 
     <script>
         const CLOUD_API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxIeelWP-KGmVllSB9AM-BY49Gb4bPgRL8Zz7fekT8sTgKrbcwYC38TgvIPjrd_yT1b/exec";
 
-        window.onload = function() {
-            fetchTerminalFeedFromCloud();
-            // Automatically scan cloud tracking database layers every 7 seconds
-            setInterval(fetchTerminalFeedFromCloud, 7000);
-        };
-
-        function fetchTerminalFeedFromCloud() {
-            const feedWrapper = document.getElementById('terminal-feed-wrapper');
-
+        function fetchTerminalFeed() {
             fetch(CLOUD_API_ENDPOINT)
                 .then(response => response.json())
                 .then(cloudOrders => {
-                    if (!cloudOrders || cloudOrders.length === 0) {
-                        feedWrapper.innerHTML = `
-                            <div class="empty-state">
-                                <i class="fa-solid fa-receipt" style="font-size: 3rem; margin-bottom: 1rem; color: #1e2640;"></i>
-                                <p>No active orders recorded in cloud sheet logs yet.</p>
-                                <p style="font-size:0.75rem; color:#475569; margin-top:0.25rem;">Orders placed via checkout will sync here immediately.</p>
-                            </div>`;
-                        return;
-                    }
+                    if (!cloudOrders || cloudOrders.length === 0) return;
 
-                    feedWrapper.innerHTML = "";
-                    
-                    // Invert mapping indices so newest entries populate at the very top of the interface
-                    cloudOrders.reverse().forEach(order => {
-                        const card = document.createElement('div');
-                        card.className = "order-terminal-card";
-                        card.innerHTML = `
-                            <div class="card-meta-row">
-                                <div>
-                                    <span class="badge-table">Table ${order.table}</span>
-                                    <span style="font-size:0.85rem; color:#94a3b8; margin-left:0.5rem;">${order.timestamp}</span>
-                                </div>
-                                <div style="font-size:0.9rem; font-weight:800; color:#10b981;">₹${order.total}</div>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-size:0.95rem; font-weight:700; color:#ffffff;">Guest: ${order.guest}</div>
-                                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.15rem;">ID: ${order.id} | Mode: ${order.mode}</div>
-                                </div>
-                                <button class="btn-print-action" onclick="triggerHardwarePrint('${encodeURIComponent(order.rawKot)}')">
-                                    Print KOT <i class="fa-solid fa-print"></i>
-                                </button>
-                            </div>
-                        `;
-                        feedWrapper.appendChild(card);
+                    // --- ANALYTICS ENGINE ---
+                    let totalRev = 0;
+                    let hourCounts = {};
+                    cloudOrders.forEach(o => {
+                        totalRev += parseFloat(o.total) || 0;
+                        // Extract hour from timestamp
+                        let hr = new Date(o.timestamp).getHours();
+                        hourCounts[hr] = (hourCounts[hr] || 0) + 1;
                     });
-                })
-                .catch(error => {
-                    console.error("Cloud syncing interface bottleneck down:", error);
-                    feedWrapper.innerHTML = `<p style="color:#ef4444; text-align:center;font-size:0.85rem;padding:2rem;">⚠️ Network interruption reconnecting to spreadsheet server arrays...</p>`;
+                    
+                    let peakHour = Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b);
+
+                    // Update UI
+                    document.getElementById('kpi-revenue').innerText = "₹" + totalRev.toLocaleString();
+                    document.getElementById('kpi-peak').innerText = peakHour + ":00";
+                    document.getElementById('kpi-avg').innerText = "₹" + (totalRev / cloudOrders.length).toFixed(0);
+
+                    // --- ORDER FEED ---
+                    const feed = document.getElementById('terminal-feed-wrapper');
+                    feed.innerHTML = "";
+                    cloudOrders.reverse().forEach(order => {
+                        feed.innerHTML += `
+                            <div class="order-terminal-card">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                    <span class="badge-table">Table ${order.table}</span>
+                                    <span style="font-weight:800; color:#10b981;">₹${order.total}</span>
+                                </div>
+                                <div style="font-weight:700; margin-bottom:5px;">Guest: ${order.guest}</div>
+                                <button class="btn-print-action" onclick="window.print()">Print KOT</button>
+                            </div>`;
+                    });
                 });
         }
 
-        function triggerHardwarePrint(encodedKotText) {
-            const decodedKot = decodeURIComponent(encodedKotText);
-            const printBuffer = document.getElementById('hidden-print-buffer');
-            
-            printBuffer.innerText = decodedKot;
-            window.print();
-        }
+        window.onload = () => { fetchTerminalFeed(); setInterval(fetchTerminalFeed, 7000); };
     </script>
 </body>
 </html>
