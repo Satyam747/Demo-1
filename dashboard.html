@@ -60,19 +60,20 @@
     </div>
 
     <script>
-        // 🚀 YOUR NEW LIVE DEPLOYMENT ENDPOINT
         const CLOUD_API_ENDPOINT = "https://script.google.com/macros/s/AKfycbznHrEtLR_Twy4gw4ffuM-3Nk5G1P3GwxC00IQJ7xzanhitS3zYCe3VTfp_lzj2q1vj/exec";
 
         function fetchTerminalFeed() {
             fetch(CLOUD_API_ENDPOINT)
-                .then(res => {
-                    if (!res.ok) throw new Error("Server parameters mismatch");
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    // Safety check if Apps Script returns an error structure instead of array
+                    // Check if Apps Script returned a system execution error object
+                    if (data && data.scriptError) {
+                        document.getElementById('terminal-feed-wrapper').innerHTML = `<p style="text-align:center; color:#ef4444; margin-top:2rem;">⚠️ Google Script Error: ${data.scriptError}</p>`;
+                        return;
+                    }
+
                     if (!Array.isArray(data)) {
-                        document.getElementById('terminal-feed-wrapper').innerHTML = `<p style="text-align:center; color:#ef4444; margin-top:2rem;">⚠️ API Error: Google Script did not return expected array matrix.</p>`;
+                        document.getElementById('terminal-feed-wrapper').innerHTML = `<p style="text-align:center; color:#ef4444; margin-top:2rem;">⚠️ API Error: Expected array structure but received alternative format.</p>`;
                         return;
                     }
 
@@ -89,13 +90,11 @@
                     
                     data.forEach(o => {
                         totalRev += parseFloat(o.total) || 0;
-                        
-                        // Cross-browser safe alternative hour extraction (avoids NaN:00 crash)
                         if (o.timestamp && typeof o.timestamp === 'string') {
-                            let structuralParts = o.timestamp.split(/[: ]/); // ["03", "25", "PM"]
-                            if (structuralParts.length >= 3) {
-                                let hr = parseInt(structuralParts[0]) || 0;
-                                let ampm = structuralParts[2].toUpperCase();
+                            let parts = o.timestamp.split(/[: ]/);
+                            if (parts.length >= 3) {
+                                let hr = parseInt(parts[0]) || 0;
+                                let ampm = parts[2].toUpperCase();
                                 if (ampm === "PM" && hr < 12) hr += 12;
                                 if (ampm === "AM" && hr === 12) hr = 0;
                                 hourCounts[hr] = (hourCounts[hr] || 0) + 1;
@@ -120,14 +119,12 @@
                     
                     data.reverse().forEach(order => {
                         const cardId = "card-" + order.id;
-                        
                         let grossTotal = parseFloat(order.total) || 0;
                         let taxableValue = grossTotal / 1.05;
                         let aggregateGst = grossTotal - taxableValue;
                         let cgst = aggregateGst / 2;
                         let sgst = aggregateGst / 2;
 
-                        // Crash protection for string mutation methods
                         let safeGuestName = String(order.guest || "GUEST").toUpperCase();
                         let safeTable = order.table || "0";
                         let safeMode = order.mode || "UNKNOWN";
@@ -164,8 +161,7 @@
                     });
                 })
                 .catch(err => {
-                    console.error("Critical operational failure:", err);
-                    document.getElementById('terminal-feed-wrapper').innerHTML = `<p style="text-align:center; color:#ef4444; margin-top:2rem;">⚠️ API Connection Error: Failed to contact data server feed.</p>`;
+                    document.getElementById('terminal-feed-wrapper').innerHTML = `<p style="text-align:center; color:#ef4444; margin-top:2rem;">⚠️ Connection Error: Failed to load endpoint data feed.</p>`;
                 });
         }
 
@@ -186,9 +182,9 @@
                             alert("Database log successfully cleared.");
                             fetchTerminalFeed();
                         } else {
-                            alert("Error processing purge command: " + resObject.message);
+                            alert("Error: " + resObject.message);
                         }
-                    }).catch(err => alert("Connection system crash error: " + err));
+                    }).catch(err => alert("Connection error: " + err));
             }
         }
 
