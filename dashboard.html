@@ -18,27 +18,31 @@
             min-height: 100vh;
         }
         
-        /* 🔐 ATM-STYLE PIN LOCK OVERLAY */
+        /* 🔐 ATM-STYLE PIN LOCK OVERLAY (TOUCH-FIXED) */
         #pin-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(5, 7, 15, 0.95);
+            background-color: #05070f; /* Fallback color to avoid rendering glitches */
+            background-color: rgba(5, 7, 15, 0.98);
             backdrop-filter: blur(15px);
-            z-index: 1000;
+            -webkit-backdrop-filter: blur(15px);
+            z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            pointer-events: auto; /* Forces browser to intercept touches */
         }
         .pin-container {
             background-color: #0b0f19;
             border: 1px solid #1e2640;
             padding: 2rem;
             border-radius: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
             text-align: center;
             max-width: 22rem;
-            width: 100%;
+            width: 90%;
+            pointer-events: auto;
         }
         .pin-display {
             background-color: #05070f;
@@ -50,7 +54,7 @@
             font-weight: 800;
             color: #c5a880;
             margin-bottom: 1.5rem;
-            min-height: 4rem;
+            min-height: 4.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -66,11 +70,11 @@
             color: #ffffff;
             font-size: 1.5rem;
             font-weight: 700;
-            padding: 1rem;
-            border-radius: 50%;
-            aspect-ratio: 1;
+            padding: 1rem 0;
+            border-radius: 0.75rem; /* Better mobile tap targeting than 50% circle */
             cursor: pointer;
             transition: all 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
         }
         .pin-btn:active { background-color: #c5a880; color: #070a13; transform: scale(0.95); }
         .pin-btn.clear { color: #ef4444; font-size: 1.1rem; }
@@ -92,7 +96,6 @@
         .brand-meta h1 { font-size: 1.75rem; color: #ffffff; font-weight: 800; }
         .brand-meta p { color: #c5a880; font-size: 0.9rem; font-weight: 600; margin-top: 0.25rem; }
         
-        /* 🔄 RESET SYSTEM BUTTON */
         .btn-reset-session {
             background-color: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.4);
@@ -122,7 +125,7 @@
         .stat-card p { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
         .stat-card h3 { font-size: 1.75rem; color: #ffffff; font-weight: 800; margin-top: 0.25rem; }
 
-        /* 📑 VIEW TABS CONTROL SYSTEM */
+        /* 📑 TAB CONTROL SYSTEM */
         .view-tabs {
             display: flex;
             gap: 1rem;
@@ -212,7 +215,7 @@
     <div id="pin-overlay">
         <div class="pin-container">
             <h2 style="color: #ffffff; margin-bottom: 0.5rem; font-weight: 800;">Admin Terminal</h2>
-            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN</p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN (Or Type via Keyboard)</p>
             <div class="pin-display" id="pin-dots"></div>
             <div class="pin-grid">
                 <button class="pin-btn" onclick="pressPin('1')">1</button>
@@ -238,7 +241,6 @@
                 <h1>The Velvet Lounge</h1>
                 <p><i class="fa-solid fa-circle" style="color:#10b981; font-size:0.7rem;"></i> Terminal Display System (7s Sync)</p>
             </div>
-            <!-- 🔄 BULLETPROOF CLOSING RESET BUTTON -->
             <button class="btn-reset-session" onclick="triggerClosingReset()">
                 <i class="fa-solid fa-dumpster-fire"></i> Closing Reset (Clear Day)
             </button>
@@ -260,7 +262,7 @@
             </div>
         </div>
 
-        <!-- 📑 SUB-TABS TO CONTOL VIEW MODE -->
+        <!-- 📑 SUB-TABS CONTROL SYSTEM -->
         <div class="view-tabs">
             <button class="tab-trigger active" id="tab-active" onclick="switchViewTab('active')">Active KOTs</button>
             <button class="tab-trigger" id="tab-history" onclick="switchViewTab('history')">Order History (Past Log)</button>
@@ -283,7 +285,21 @@
         let currentPinInput = "";
         let securityAttempts = 0;
         let globalOrdersCache = [];
-        let currentViewMode = "active"; // 'active' or 'history'
+        let currentViewMode = "active"; 
+
+        // ⌨️ ACCESSIBILITY: PHYSICAL KEYBOARD LISTENER
+        window.addEventListener('keydown', function(e) {
+            // Only listen if PIN screen is active
+            if (document.getElementById('pin-overlay').style.display !== 'none') {
+                if (e.key >= '0' && e.key <= '9') {
+                    pressPin(e.key);
+                } else if (e.key === 'Backspace') {
+                    clearPin();
+                } else if (e.key === 'Enter') {
+                    submitPin();
+                }
+            }
+        });
 
         // PIN-PAD INTERFACE SYSTEM
         function pressPin(num) {
@@ -335,13 +351,11 @@
             }
         }
 
-        // 🔍 FAILSAFE COLUMN DETECTION ENGINE (Never displays 0 due to header mismatch)
         function processOrdersLogRows(rows) {
             if (rows.length === 0) return;
 
             const headers = rows[0].c.map(cell => cell && cell.v ? cell.v.toString().trim().toLowerCase() : "");
             
-            // Failsafe mappings to avoid index breaks
             let idIdx = headers.findIndex(h => h.includes("id"));
             let nameIdx = headers.findIndex(h => h.includes("name") || h.includes("customer"));
             let tableIdx = headers.findIndex(h => h.includes("table"));
@@ -385,7 +399,6 @@
 
             globalOrdersCache = allOrders;
             
-            // Sync Counter UI Elements accurately
             document.getElementById('stat-active-count').innerText = `${activeCount} Pending`;
             document.getElementById('stat-total-count').innerText = `${totalLoggedCount} Orders`;
             document.getElementById('stat-gross-revenue').innerText = `₹${totalGrossRevenue.toFixed(2)}`;
@@ -393,7 +406,6 @@
             renderKdsGrid();
         }
 
-        // TOGGLE SWITCH TABS
         function switchViewTab(mode) {
             currentViewMode = mode;
             document.getElementById('tab-active').classList.toggle('active', mode === 'active');
@@ -405,7 +417,6 @@
             const grid = document.getElementById('orders-live-grid');
             grid.innerHTML = "";
 
-            // Filter cache data based on the current view tab selection
             const filteredOrders = globalOrdersCache.filter(order => {
                 if (currentViewMode === "active") {
                     return order.status.toLowerCase() !== "fulfilled";
@@ -451,3 +462,109 @@
                         <div class="cust-name">${order.name}</div>
                         <div class="items-list">${order.items}</div>
                         <div class="order-total">Total Amount: ₹${order.total.toFixed(2)}</div>
+                    </div>
+                    ${actionHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function triggerMarkFulfilledAction(orderId) {
+            const card = document.getElementById(`order-card-${orderId}`);
+            if (card) {
+                card.style.opacity = '0.3';
+                card.style.transform = 'scale(0.95)';
+                card.style.pointerEvents = 'none';
+            }
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({
+                        action: "updateStatus",
+                        orderId: orderId,
+                        status: "Fulfilled"
+                    })
+                });
+
+                const match = globalOrdersCache.find(o => o.id === orderId);
+                if (match) match.status = "Fulfilled";
+                renderKdsGrid();
+
+            } catch (error) {
+                alert("Cloud Synchronization Failed.");
+                if (card) { card.style.opacity = '1'; card.style.transform = 'none'; card.style.pointerEvents = 'auto'; }
+            }
+        }
+
+        async function triggerClosingReset() {
+            const activeOrders = globalOrdersCache.filter(o => o.status.toLowerCase() !== "fulfilled");
+            if (activeOrders.length === 0) {
+                alert("All orders are already cleared! No active KOTs to reset.");
+                return;
+            }
+
+            const confirmCode = prompt(`⚠️ WARNING: This will clear/fulfill all active ${activeOrders.length} orders.\nType 'RESET' to confirm closing:`);
+            if (confirmCode !== "RESET") {
+                alert("Reset cancelled.");
+                return;
+            }
+
+            document.getElementById('orders-live-grid').innerHTML = `<div class="loading-view">Executing Bulk Closing Operations...</div>`;
+
+            for (let order of activeOrders) {
+                try {
+                    await fetch(APPS_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify({
+                            action: "updateStatus",
+                            orderId: order.id,
+                            status: "Fulfilled"
+                        })
+                    });
+                    order.status = "Fulfilled";
+                } catch (e) {
+                    console.error("Failed to clear order:", order.id);
+                }
+            }
+
+            alert("Session Closed Successfully!");
+            fetchLiveOrdersFromCloud(); 
+        }
+
+        function executeKotThermalPrint(orderId) {
+            const order = globalOrdersCache.find(o => o.id === orderId);
+            if (!order) return;
+
+            const printArea = document.getElementById('kot-print-area');
+            
+            let kotText = `==========================\n`;
+            kotText += `      KITCHEN ORDER       \n`;
+            kotText += `==========================\n`;
+            kotText += `Order ID : #${order.id.padEnd(13)}\n`;
+            kotText += `Table No : T-${order.table.padEnd(12)}\n`;
+            kotText += `Cust Name: ${order.name.substring(0, 14).padEnd(14)}\n`;
+            kotText += `--------------------------\n`;
+            kotText += `ITEMS LOGS:\n`;
+
+            const itemsLines = order.items.split('\n');
+            itemsLines.forEach(line => {
+                if(line.trim() !== "") {
+                    kotText += `• ${line.substring(0, 24)}\n`;
+                }
+            });
+            
+            kotText += `==========================\n`;
+            kotText += `   DIGICONVO KDS SYSTEM   \n`;
+            kotText += `==========================\n\n\n\n`;
+
+            printArea.innerHTML = `<pre class="kot-pre">${kotText}</pre>`;
+            window.print();
+        }
+    </script>
+</body>
+</html>
