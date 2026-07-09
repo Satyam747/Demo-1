@@ -116,6 +116,7 @@
             display: flex;
             gap: 1rem;
             margin-bottom: 1.25rem;
+            position: relative;
         }
         .prod-img {
             width: 5.5rem;
@@ -130,10 +131,28 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        .prod-title { font-size: 1rem; font-weight: 700; color: #ffffff; }
+        .prod-title { font-size: 1rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; }
         .prod-desc { font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; line-height: 1.3; }
         .prod-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
-        .prod-price { font-size: 1.1rem; font-weight: 800; color: #c5a880; }
+        
+        /* ⚡ HAPPY HOUR VISUAL DESIGN SYSTEM */
+        .prod-price { font-size: 1.1rem; font-weight: 800; color: #c5a880; display: flex; align-items: center; gap: 0.4rem; }
+        .old-price { font-size: 0.85rem; font-weight: 500; color: #64748b; text-decoration: line-through; }
+        .happy-hour-badge {
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-top: 0.25rem;
+        }
         
         /* ADD BUTTON SYSTEM */
         .add-item-btn {
@@ -249,7 +268,6 @@
         let activeCategory = "";
         let cartState = {};
 
-        // GATEWAY ROUTING SECURITY VERIFICATION
         window.onload = function() {
             const storedName = localStorage.getItem('digiconvo_cust_name');
             const storedTable = localStorage.getItem('digiconvo_table_no');
@@ -270,7 +288,6 @@
             fetchLiveGoogleSheetData();
         };
 
-        // GOOGLE VISUALIZATION DATA STREAMER
         async function fetchLiveGoogleSheetData() {
             const endpoint = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
             
@@ -278,7 +295,6 @@
                 const response = await fetch(endpoint);
                 const text = await response.text();
                 
-                // Non-regex parsing framework configuration
                 const startPosition = text.indexOf("(") + 1;
                 const endPosition = text.lastIndexOf(")");
                 const rawJsonString = text.substring(startPosition, endPosition);
@@ -306,16 +322,21 @@
         function processRawRows(rows) {
             const parsedData = rows.map(row => {
                 const cells = row.c || [];
+                const finalPrice = cells[3] && cells[3].v ? parseInt(cells[3].v.toString().replace(/[^0-9]/g, '')) : 0;
+                
+                // 🔄 READ NEW COLUMN F (Base Price) - Fallback to Final Price if empty
+                const basePrice = cells[5] && cells[5].v ? parseInt(cells[5].v.toString().replace(/[^0-9]/g, '')) : finalPrice;
+
                 return {
                     category: cells[0] && cells[0].v ? cells[0].v.toString().trim() : "Uncategorized",
                     name: cells[1] && cells[1].v ? cells[1].v.toString().trim() : "Unnamed Item",
                     desc: cells[2] && cells[2].v ? cells[2].v.toString().trim() : "",
-                    price: cells[3] && cells[3].v ? parseInt(cells[3].v.toString().replace(/[^0-9]/g, '')) : 0,
+                    price: finalPrice,
+                    basePrice: basePrice,
                     image: cells[4] && cells[4].v ? cells[4].v.toString().trim() : "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=400"
                 };
             });
 
-            // Strip out column text parameter fields from array indexes
             globalMenuData = parsedData.filter(item => 
                 item.name.toLowerCase() !== "name" && 
                 item.category.toLowerCase() !== "category"
@@ -328,7 +349,6 @@
             renderMenuGrid();
             updateFloatingStripUI();
 
-            // RESTORED INJECTION POINTS: Hides spinner element and displays menu grid wrapper container
             document.getElementById('loading-view').style.display = 'none';
             document.getElementById('menu-items-grid').style.display = 'block';
         }
@@ -375,6 +395,16 @@
                     `;
                 }
 
+                // 🔥 AUTONOMOUS HAPPY HOUR INTERCEPTOR 
+                const hasDiscount = item.basePrice > item.price;
+                const priceDisplayHtml = hasDiscount 
+                    ? `<span class="old-price">₹${item.basePrice}</span>₹${item.price}`
+                    : `₹${item.price}`;
+                
+                const badgeHtml = hasDiscount
+                    ? `<div class="happy-hour-badge"><i class="fa-solid fa-fire"></i> Happy Hour</div>`
+                    : ``;
+
                 const card = document.createElement('div');
                 card.className = "menu-card";
                 card.innerHTML = `
@@ -382,10 +412,11 @@
                     <div class="prod-details">
                         <div>
                             <div class="prod-title">${item.name}</div>
+                            ${badgeHtml}
                             <div class="prod-desc">${item.desc}</div>
                         </div>
                         <div class="prod-meta">
-                            <div class="prod-price">₹${item.price}</div>
+                            <div class="prod-price">${priceDisplayHtml}</div>
                             ${actionButtonHtml}
                         </div>
                     </div>
