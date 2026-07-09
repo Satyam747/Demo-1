@@ -18,13 +18,11 @@
             min-height: 100vh;
         }
         
-        /* 🔐 ATM-STYLE PIN LOCK OVERLAY */
+        /* 🔐 ATM-STYLE PIN LOCK OVERLAY (SOLID BACKEND - NO BLUR GLITCH) */
         #pin-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(5, 7, 15, 0.98);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background-color: #070a13; /* Solid color to prevent mobile touch drops */
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -67,12 +65,13 @@
             color: #ffffff;
             font-size: 1.5rem;
             font-weight: 700;
-            padding: 1rem 0;
+            padding: 1.1rem 0;
             border-radius: 0.75rem;
             cursor: pointer;
-            transition: all 0.1s ease;
+            transition: background-color 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        .pin-btn:active { background-color: #c5a880; color: #070a13; transform: scale(0.95); }
+        .pin-btn:active { background-color: #c5a880; color: #070a13; }
         .pin-btn.clear { color: #ef4444; font-size: 1.1rem; }
         .pin-btn.submit { color: #10b981; font-size: 1.1rem; }
 
@@ -209,7 +208,7 @@
     <div id="pin-overlay">
         <div class="pin-container">
             <h2 style="color: #ffffff; margin-bottom: 0.5rem; font-weight: 800;">Admin Terminal</h2>
-            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN (Keyboard Supported)</p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN (Or Type via Keyboard)</p>
             <div class="pin-display" id="pin-dots"></div>
             <div class="pin-grid">
                 <button class="pin-btn" onclick="pressPin('1')">1</button>
@@ -278,10 +277,11 @@
         let globalOrdersCache = [];
         let currentViewMode = "active";
         let cardViewStates = {}; 
+        let isLocked = true; // Safe state guard for typing listeners
 
         // PHYSICAL KEYBOARD LISTENER
         window.addEventListener('keydown', function(e) {
-            if (document.getElementById('pin-overlay').style.display !== 'none') {
+            if (isLocked) {
                 if (e.key >= '0' && e.key <= '9') pressPin(e.key);
                 else if (e.key === 'Backspace') clearPin();
                 else if (e.key === 'Enter') submitPin();
@@ -296,6 +296,7 @@
         
         function submitPin() {
             if (currentPinInput === MASTER_PIN) {
+                isLocked = false; // Release input block guard
                 document.getElementById('pin-overlay').style.display = 'none';
                 document.getElementById('main-workspace').style.display = 'block';
                 startLiveKdsEngine();
@@ -326,26 +327,24 @@
             }
         }
 
-        // 🛡️ ACCURATE GOOGLE-COLS PARSER (No more skipped rows or wrong columns)
+        // 🛡️ CRASH-PROOF & ACCURATE PARSER ENGINE
         function processOrdersLogRows(table) {
             const rows = table.rows || [];
             const cols = table.cols || [];
             if (rows.length === 0) return;
 
-            // 1. Read headers officially from Google's column labels metadata
+            // Extract accurate keys from Google metadata headers
             let headers = cols.map(c => c.label ? c.label.toLowerCase().trim() : "");
             let startRow = 0;
 
-            // 2. Backup Fallback: If labels are empty, check if rows[0] contains headers
             if (headers.every(h => h === "")) {
                 const firstRowText = rows[0].c.map(cell => cell && cell.v ? cell.v.toString().toLowerCase().trim() : "");
                 if (firstRowText.some(t => t.includes("id") || t.includes("total") || t.includes("status"))) {
                     headers = firstRowText;
-                    startRow = 1; // It's a header row, so skip row 0 when looping data
+                    startRow = 1; 
                 }
             }
 
-            // 3. Robust Keyword Matching for Column Placement
             let idIdx = headers.findIndex(h => h.includes("id") || h.includes("order"));
             let nameIdx = headers.findIndex(h => h.includes("name") || h.includes("customer") || h.includes("cust"));
             let tableIdx = headers.findIndex(h => h.includes("table") || h.includes("tab"));
@@ -353,7 +352,6 @@
             let totalIdx = headers.findIndex(h => h.includes("total") || h.includes("price") || h.includes("amount") || h.includes("bill"));
             let statusIdx = headers.findIndex(h => h.includes("status") || h.includes("state"));
 
-            // Hard Fallbacks if sheet is totally scrambled
             if (idIdx === -1) idIdx = 0;
             if (nameIdx === -1) nameIdx = 1;
             if (tableIdx === -1) tableIdx = 2;
@@ -366,25 +364,38 @@
             let totalLoggedCount = 0;
             let totalGrossRevenue = 0;
 
-            // Loop through all data rows flawlessly
             for (let i = startRow; i < rows.length; i++) {
                 const cells = rows[i].c || [];
-                if (!cells[idIdx] || cells[idIdx].v === null) continue;
+                // Failsafe condition checking to block loop crashes due to empty row fields
+                if (!cells[idIdx] || cells[idIdx].v === null || cells[idIdx].v === undefined) continue;
 
-                const order = {
-                    id: cells[idIdx] ? cells[idIdx].v.toString() : "",
-                    name: cells[nameIdx] && cells[nameIdx].v ? cells[nameIdx].v.toString() : "Guest Customer",
-                    table: cells[tableIdx] && cells[tableIdx].v ? cells[tableIdx].v.toString() : "00",
-                    items: cells[itemsIdx] && cells[itemsIdx].v ? cells[itemsIdx].v.toString() : "",
-                    total: cells[totalIdx] && cells[totalIdx].v ? parseFloat(cells[totalIdx].v.toString().replace(/[^0-9.]/g, '')) : 0,
-                    status: (statusIdx !== -1 && cells[statusIdx] && cells[statusIdx].v) ? cells[statusIdx].v.toString().trim() : "Pending"
-                };
+                const orderId = cells[idIdx].v.toString().trim();
+                if (!orderId) continue;
+
+                const custName = cells[nameIdx] && cells[nameIdx].v !== null ? cells[nameIdx].v.toString().trim() : "Guest Customer";
+                const tableNo = cells[tableIdx] && cells[tableIdx].v !== null ? cells[tableIdx].v.toString().trim() : "00";
+                const orderItems = cells[itemsIdx] && cells[itemsIdx].v !== null ? cells[itemsIdx].v.toString() : "";
+                
+                let orderTotal = 0;
+                if (cells[totalIdx] && cells[totalIdx].v !== null && cells[totalIdx].v !== undefined) {
+                    orderTotal = parseFloat(cells[totalIdx].v.toString().replace(/[^0-9.]/g, ''));
+                }
+                if (isNaN(orderTotal)) orderTotal = 0;
+
+                const orderStatus = (statusIdx !== -1 && cells[statusIdx] && cells[statusIdx].v !== null) ? cells[statusIdx].v.toString().trim() : "Pending";
 
                 totalLoggedCount++;
-                totalGrossRevenue += order.total;
-                if (order.status.toLowerCase() !== "fulfilled") activeCount++;
+                totalGrossRevenue += orderTotal;
+                if (orderStatus.toLowerCase() !== "fulfilled") activeCount++;
 
-                allOrders.push(order);
+                allOrders.push({
+                    id: orderId,
+                    name: custName,
+                    table: tableNo,
+                    items: orderItems,
+                    total: orderTotal,
+                    status: orderStatus
+                });
             }
 
             globalOrdersCache = allOrders;
@@ -441,3 +452,126 @@
             let t = `==========================\n`;
             t += `    THE VELVET LOUNGE     \n`;
             t += `==========================\n`;
+            t += `Bill ID  : #${order.id.padEnd(13)}\n`;
+            t += `Table No : T-${order.table.padEnd(12)}\n`;
+            t += `Customer : ${order.name.substring(0,13).padEnd(13)}\n`;
+            t += `--------------------------\n`;
+            const lines = order.items.split('\n');
+            lines.forEach(l => { if(l.trim()) t += `${l.substring(0, 26)}\n`; });
+            t += `--------------------------\n`;
+            t += `Subtotal : ₹${subtotal.toFixed(2).padEnd(14)}\n`;
+            t += `GST (5%) : ₹${gst.toFixed(2).padEnd(14)}\n`;
+            t += `==========================\n`;
+            t += `NET TOTAL: ₹${order.total.toFixed(2).padEnd(14)}\n`;
+            t += `==========================\n`;
+            t += `  Thank You! Visit Again  `;
+            return t;
+        }
+
+        function renderKdsGrid() {
+            const grid = document.getElementById('orders-live-grid');
+            grid.innerHTML = "";
+
+            const filteredOrders = globalOrdersCache.filter(order => {
+                return currentViewMode === "active" ? order.status.toLowerCase() !== "fulfilled" : order.status.toLowerCase() === "fulfilled";
+            });
+
+            if (filteredOrders.length === 0) {
+                grid.innerHTML = currentViewMode === "active" 
+                    ? `<div class="loading-view" style="color:#10b981;"><i class="fa-solid fa-circle-check" style="font-size:2rem; margin-bottom:1rem; display:block;"></i>All Orders Dispatched!</div>`
+                    : `<div class="loading-view">No past fulfilled records found.</div>`;
+                return;
+            }
+
+            filteredOrders.forEach(order => {
+                if (!cardViewStates[order.id]) {
+                    cardViewStates[order.id] = currentViewMode === "active" ? "kot" : "bill";
+                }
+                const activeSubView = cardViewStates[order.id];
+                const initialText = activeSubView === "kot" ? generateKotTextTemplate(order) : generateBillTextTemplate(order);
+
+                const card = document.createElement('div');
+                card.className = `order-card ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-style' : ''}`;
+                card.id = `order-card-${order.id}`;
+                
+                let actionHtml = "";
+                if (order.status.toLowerCase() !== "fulfilled") {
+                    actionHtml = `
+                        <div class="card-actions">
+                            <button class="btn btn-print" onclick="executePhysicalPrint('${order.id}')"><i class="fa-solid fa-print"></i> Print</button>
+                            <button class="btn btn-fulfill" onclick="triggerMarkFulfilledAction('${order.id}')"><i class="fa-solid fa-check"></i> Fulfill</button>
+                        </div>
+                    `;
+                } else {
+                    actionHtml = `
+                        <div class="card-actions"><div class="status-tag"><i class="fa-solid fa-circle-check"></i> Dispatched & Paid</div></div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="order-id">#${order.id}</span>
+                        <span class="table-badge ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-badge' : ''}">Table ${order.table}</span>
+                    </div>
+                    
+                    <div class="card-preview-selector">
+                        <button id="btn-kot-${order.id}" class="preview-tab-btn ${activeSubView === 'kot' ? 'active' : ''}" onclick="toggleInternalCardView('${order.id}', 'kot')"><i class="fa-solid fa-utensils"></i> 📄 KOT Preview</button>
+                        <button id="btn-bill-${order.id}" class="preview-tab-btn ${activeSubView === 'bill' ? 'active' : ''}" onclick="toggleInternalCardView('${order.id}', 'bill')"><i class="fa-solid fa-receipt"></i> 💰 Bill Preview</button>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="digital-terminal-box" id="terminal-text-${order.id}">${initialText}</div>
+                    </div>
+                    ${actionHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function triggerMarkFulfilledAction(orderId) {
+            const card = document.getElementById(`order-card-${orderId}`);
+            if (card) { card.style.opacity = '0.3'; card.style.pointerEvents = 'none'; }
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", 
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({ action: "updateStatus", orderId: orderId, status: "Fulfilled" })
+                });
+                const match = globalOrdersCache.find(o => o.id === orderId);
+                if (match) match.status = "Fulfilled";
+                renderKdsGrid();
+            } catch (error) {
+                alert("Cloud Synchronization Failed.");
+                if (card) { card.style.opacity = '1'; card.style.pointerEvents = 'auto'; }
+            }
+        }
+
+        async function triggerClosingReset() {
+            const activeOrders = globalOrdersCache.filter(o => o.status.toLowerCase() !== "fulfilled");
+            if (activeOrders.length === 0) { alert("All orders are already cleared!"); return; }
+            const confirmCode = prompt(`⚠️ Clear all active ${activeOrders.length} orders?\nType 'RESET' to confirm:`);
+            if (confirmCode !== "RESET") return;
+
+            document.getElementById('orders-live-grid').innerHTML = `<div class="loading-view">Executing Bulk Operations...</div>`;
+            for (let order of activeOrders) {
+                try {
+                    await fetch(APPS_SCRIPT_URL, {
+                        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify({ action: "updateStatus", orderId: order.id, status: "Fulfilled" })
+                    });
+                    order.status = "Fulfilled";
+                } catch (e) {}
+            }
+            fetchLiveOrdersFromCloud(); 
+        }
+
+        function executePhysicalPrint(orderId) {
+            const txt = document.getElementById(`terminal-text-${orderId}`).innerText;
+            const printArea = document.getElementById('kot-print-area');
+            printArea.innerHTML = `<pre class="kot-pre">${txt}\n\n\n\n</pre>`;
+            window.print();
+        }
+    </script>
+</body>
+</html>
