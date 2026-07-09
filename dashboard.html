@@ -18,11 +18,11 @@
             min-height: 100vh;
         }
         
-        /* 🔐 ATM-STYLE PIN LOCK OVERLAY (SOLID BACKEND - NO BLUR GLITCH) */
+        /* 🔐 ATM-STYLE PIN LOCK OVERLAY */
         #pin-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #070a13; /* Solid color to prevent mobile touch drops */
+            background-color: #070a13;
             z-index: 9999;
             display: flex;
             flex-direction: column;
@@ -65,7 +65,7 @@
             color: #ffffff;
             font-size: 1.5rem;
             font-weight: 700;
-            padding: 1.1rem 0;
+            padding: 1rem 0;
             border-radius: 0.75rem;
             cursor: pointer;
             transition: background-color 0.1s ease;
@@ -150,38 +150,22 @@
         .table-badge.fulfilled-badge { background-color: #10b981; }
         .order-id { font-weight: 700; font-size: 0.9rem; color: #cbd5e1; }
         
-        /* CARD PREVIEW SWITCHER */
-        .card-preview-selector {
-            display: flex;
-            background-color: #05070f;
-            margin: 0.75rem 1.25rem 0 1.25rem;
-            padding: 0.25rem;
-            border-radius: 0.5rem;
-            border: 1px solid #1e2640;
-        }
-        .preview-tab-btn {
-            flex: 1; background: none; border: none; color: #64748b; font-weight: 700;
-            font-size: 0.75rem; padding: 0.4rem 0; cursor: pointer; border-radius: 0.35rem;
-            display: flex; align-items: center; justify-content: center; gap: 0.3rem;
-        }
-        .preview-tab-btn.active { background-color: #c5a880; color: #05070f; }
-
-        .card-body { padding: 1rem 1.25rem 1.25rem 1.25rem; flex: 1; }
+        .card-body { padding: 1.25rem; flex: 1; }
         
-        /* DIGITAL TERMINAL BOX */
+        /* 📄 INVOICE TERMINAL PAPER STYLE */
         .digital-terminal-box {
-            background-color: #fafafa;
+            background-color: #ffffff;
             color: #111111;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.85rem;
             font-weight: 700;
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             border-radius: 0.5rem;
             white-space: pre-wrap;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
-            line-height: 1.3;
-            border-left: 3px solid #c5a880;
-            margin-top: 0.5rem;
+            word-break: break-word;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+            line-height: 1.4;
+            border-top: 4px solid #c5a880;
         }
         
         .card-actions { padding: 1rem; display: flex; gap: 0.75rem; background-color: #0b0f19; border-top: 1px solid #1e2640; }
@@ -190,15 +174,18 @@
             cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s;
         }
         .btn-print { background-color: #242f4d; color: #cbd5e1; border: 1px solid #3b4b75; }
+        .btn-print:hover { background-color: #3b4b75; color: #ffffff; }
         .btn-fulfill { background-color: #10b981; color: #05070f; }
+        .btn-fulfill:hover { background-color: #059669; }
         .status-tag { font-size: 0.85rem; font-weight: 700; color: #10b981; width: 100%; text-align: center; padding: 0.4rem; }
 
         .loading-view { text-align: center; padding: 5rem; color: #64748b; font-weight: 600; grid-column: 1/-1; }
         
+        /* PRINT STYLESheet Matrix */
         @media print {
             body * { display: none; }
             #kot-print-area { display: block !important; position: absolute; top: 0; left: 0; width: 58mm; font-family: 'Courier New', Courier, monospace; color: #000000; background: #ffffff; padding: 0; margin: 0; }
-            .kot-pre { font-size: 12px; font-weight: bold; line-height: 1.2; white-space: pre-wrap; word-break: break-all; width: 58mm; }
+            .kot-pre { font-size: 12px; font-weight: bold; line-height: 1.3; white-space: pre-wrap; word-break: break-all; width: 58mm; }
         }
     </style>
 </head>
@@ -208,7 +195,7 @@
     <div id="pin-overlay">
         <div class="pin-container">
             <h2 style="color: #ffffff; margin-bottom: 0.5rem; font-weight: 800;">Admin Terminal</h2>
-            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN (Or Type via Keyboard)</p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Enter 4-Digit Secure PIN</p>
             <div class="pin-display" id="pin-dots"></div>
             <div class="pin-grid">
                 <button class="pin-btn" onclick="pressPin('1')">1</button>
@@ -264,7 +251,7 @@
         </main>
     </div>
 
-    <!-- 🖨️ PRINT RENDER DOCK -->
+    <!-- 🖨️ PRINT AREA DOCK -->
     <div id="kot-print-area" style="display: none;"></div>
 
     <script>
@@ -276,8 +263,7 @@
         let securityAttempts = 0;
         let globalOrdersCache = [];
         let currentViewMode = "active";
-        let cardViewStates = {}; 
-        let isLocked = true; // Safe state guard for typing listeners
+        let isLocked = true; 
 
         // PHYSICAL KEYBOARD LISTENER
         window.addEventListener('keydown', function(e) {
@@ -296,7 +282,7 @@
         
         function submitPin() {
             if (currentPinInput === MASTER_PIN) {
-                isLocked = false; // Release input block guard
+                isLocked = false; 
                 document.getElementById('pin-overlay').style.display = 'none';
                 document.getElementById('main-workspace').style.display = 'block';
                 startLiveKdsEngine();
@@ -327,13 +313,11 @@
             }
         }
 
-        // 🛡️ CRASH-PROOF & ACCURATE PARSER ENGINE
         function processOrdersLogRows(table) {
             const rows = table.rows || [];
             const cols = table.cols || [];
             if (rows.length === 0) return;
 
-            // Extract accurate keys from Google metadata headers
             let headers = cols.map(c => c.label ? c.label.toLowerCase().trim() : "");
             let startRow = 0;
 
@@ -366,7 +350,6 @@
 
             for (let i = startRow; i < rows.length; i++) {
                 const cells = rows[i].c || [];
-                // Failsafe condition checking to block loop crashes due to empty row fields
                 if (!cells[idIdx] || cells[idIdx].v === null || cells[idIdx].v === undefined) continue;
 
                 const orderId = cells[idIdx].v.toString().trim();
@@ -413,58 +396,30 @@
             renderKdsGrid();
         }
 
-        function toggleInternalCardView(orderId, viewType) {
-            cardViewStates[orderId] = viewType;
-            const kotBtn = document.getElementById(`btn-kot-${orderId}`);
-            const billBtn = document.getElementById(`btn-bill-${orderId}`);
-            const textDisplay = document.getElementById(`terminal-text-${orderId}`);
+        // 🧾 COMPLETELY UNTRUNCATED INVOICE GENERATOR (Zero Info Loss)
+        function generateCompleteBillTemplate(order) {
+            const gstPercent = 5;
+            const total = order.total;
+            const subtotal = total / (1 + (gstPercent / 100));
+            const gstAmount = total - subtotal;
             
-            const order = globalOrdersCache.find(o => o.id === orderId);
-            if (!order) return;
-
-            if (viewType === 'kot') {
-                kotBtn.classList.add('active');
-                billBtn.classList.remove('active');
-                textDisplay.innerText = generateKotTextTemplate(order);
-            } else {
-                kotBtn.classList.remove('active');
-                billBtn.classList.add('active');
-                textDisplay.innerText = generateBillTextTemplate(order);
-            }
-        }
-
-        function generateKotTextTemplate(order) {
-            let t = `==========================\n`;
-            t += `      DIGITAL KOT         \n`;
-            t += `==========================\n`;
-            t += `Order ID : #${order.id.padEnd(13)}\n`;
-            t += `Table No : T-${order.table.padEnd(12)}\n`;
-            t += `--------------------------\n`;
-            const lines = order.items.split('\n');
-            lines.forEach(l => { if(l.trim()) t += `• ${l.substring(0, 24)}\n`; });
-            t += `==========================`;
-            return t;
-        }
-
-        function generateBillTextTemplate(order) {
-            const gst = order.total * 0.05;
-            const subtotal = order.total - gst;
-            let t = `==========================\n`;
-            t += `    THE VELVET LOUNGE     \n`;
-            t += `==========================\n`;
-            t += `Bill ID  : #${order.id.padEnd(13)}\n`;
-            t += `Table No : T-${order.table.padEnd(12)}\n`;
-            t += `Customer : ${order.name.substring(0,13).padEnd(13)}\n`;
-            t += `--------------------------\n`;
-            const lines = order.items.split('\n');
-            lines.forEach(l => { if(l.trim()) t += `${l.substring(0, 26)}\n`; });
-            t += `--------------------------\n`;
-            t += `Subtotal : ₹${subtotal.toFixed(2).padEnd(14)}\n`;
-            t += `GST (5%) : ₹${gst.toFixed(2).padEnd(14)}\n`;
-            t += `==========================\n`;
-            t += `NET TOTAL: ₹${order.total.toFixed(2).padEnd(14)}\n`;
-            t += `==========================\n`;
-            t += `  Thank You! Visit Again  `;
+            let t = `================================\n`;
+            t += `       THE VELVET LOUNGE        \n`;
+            t += `    GSTIN: 23AAAAA1111A1Z1      \n`; // GST Number Integrated
+            t += `================================\n`;
+            t += `Bill ID   : #${order.id}\n`;
+            t += `Table No  : Table ${order.table}\n`;
+            t += `Customer  : ${order.name}\n`;
+            t += `--------------------------------\n`;
+            t += `ITEMS / QTY / PRICE BREAKDOWN:\n`;
+            t += `${order.items.trim()}\n`; // Renders full string line-by-line without any substring slicing
+            t += `--------------------------------\n`;
+            t += `Subtotal  : ₹${subtotal.toFixed(2)}\n`;
+            t += `GST (5%)  : ₹${gstAmount.toFixed(2)}\n`;
+            t += `================================\n`;
+            t += `NET TOTAL : ₹${total.toFixed(2)}\n`;
+            t += `================================\n`;
+            t += `    Thank You! Visit Again      `;
             return t;
         }
 
@@ -484,11 +439,7 @@
             }
 
             filteredOrders.forEach(order => {
-                if (!cardViewStates[order.id]) {
-                    cardViewStates[order.id] = currentViewMode === "active" ? "kot" : "bill";
-                }
-                const activeSubView = cardViewStates[order.id];
-                const initialText = activeSubView === "kot" ? generateKotTextTemplate(order) : generateBillTextTemplate(order);
+                const completeInvoiceText = generateCompleteBillTemplate(order);
 
                 const card = document.createElement('div');
                 card.className = `order-card ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-style' : ''}`;
@@ -498,8 +449,8 @@
                 if (order.status.toLowerCase() !== "fulfilled") {
                     actionHtml = `
                         <div class="card-actions">
-                            <button class="btn btn-print" onclick="executePhysicalPrint('${order.id}')"><i class="fa-solid fa-print"></i> Print</button>
-                            <button class="btn btn-fulfill" onclick="triggerMarkFulfilledAction('${order.id}')"><i class="fa-solid fa-check"></i> Fulfill</button>
+                            <button class="btn btn-print" onclick="executePhysicalPrint('${order.id}')"><i class="fa-solid fa-print"></i> Print Bill</button>
+                            <button class="btn btn-fulfill" onclick="triggerMarkFulfilledAction('${order.id}')"><i class="fa-solid fa-check"></i> Fulfill Order</button>
                         </div>
                     `;
                 } else {
@@ -514,13 +465,9 @@
                         <span class="table-badge ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-badge' : ''}">Table ${order.table}</span>
                     </div>
                     
-                    <div class="card-preview-selector">
-                        <button id="btn-kot-${order.id}" class="preview-tab-btn ${activeSubView === 'kot' ? 'active' : ''}" onclick="toggleInternalCardView('${order.id}', 'kot')"><i class="fa-solid fa-utensils"></i> 📄 KOT Preview</button>
-                        <button id="btn-bill-${order.id}" class="preview-tab-btn ${activeSubView === 'bill' ? 'active' : ''}" onclick="toggleInternalCardView('${order.id}', 'bill')"><i class="fa-solid fa-receipt"></i> 💰 Bill Preview</button>
-                    </div>
-
                     <div class="card-body">
-                        <div class="digital-terminal-box" id="terminal-text-${order.id}">${initialText}</div>
+                        <!-- NATIVE UNTOUCHED RECEIPT SHEET -->
+                        <div class="digital-terminal-box" id="terminal-text-${order.id}">${completeInvoiceText}</div>
                     </div>
                     ${actionHtml}
                 `;
