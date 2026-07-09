@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* LUXURY DARK & GOLD CORE CORE DESIGN SYSTEM */
+        /* LUXURY DARK & GOLD CORE DESIGN SYSTEM */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: #05070f;
@@ -86,21 +86,67 @@
             border-bottom: 1px solid #1e2640;
             padding-bottom: 1.5rem;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         .brand-meta h1 { font-size: 1.75rem; color: #ffffff; font-weight: 800; }
         .brand-meta p { color: #c5a880; font-size: 0.9rem; font-weight: 600; margin-top: 0.25rem; }
         
+        /* 🔄 RESET SYSTEM BUTTON */
+        .btn-reset-session {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 0.6rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-reset-session:hover { background-color: #ef4444; color: #05070f; }
+
         /* ANALYTICS GRID */
-        .analytics-strip { display: flex; gap: 1.5rem; margin-bottom: 2rem; }
+        .analytics-strip { display: flex; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .stat-card {
             background-color: #0b0f19;
             border: 1px solid #1e2640;
             padding: 1.25rem 2rem;
             border-radius: 1rem;
             flex: 1;
+            min-width: 14rem;
         }
         .stat-card p { font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
         .stat-card h3 { font-size: 1.75rem; color: #ffffff; font-weight: 800; margin-top: 0.25rem; }
+
+        /* 📑 VIEW TABS CONTROL SYSTEM */
+        .view-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #1e2640;
+            padding-bottom: 0.75rem;
+        }
+        .tab-trigger {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            position: relative;
+        }
+        .tab-trigger.active { color: #c5a880; }
+        .tab-trigger.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.85rem; left: 0; width: 100%; height: 2px;
+            background-color: #c5a880;
+        }
 
         /* KDS ORDERS GRID */
         .orders-grid {
@@ -119,6 +165,8 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
+        .order-card.fulfilled-style { border-color: rgba(16, 185, 129, 0.2); opacity: 0.75; }
+        
         .card-header {
             background-color: #1e2640;
             padding: 1rem;
@@ -128,6 +176,7 @@
             border-bottom: 1px solid #242f4d;
         }
         .table-badge { background-color: #c5a880; color: #05070f; font-weight: 800; padding: 0.25rem 0.6rem; border-radius: 0.4rem; font-size: 0.85rem; }
+        .table-badge.fulfilled-badge { background-color: #10b981; }
         .order-id { font-weight: 700; font-size: 0.9rem; color: #cbd5e1; }
         
         .card-body { padding: 1.25rem; flex: 1; }
@@ -144,11 +193,12 @@
         .btn-print:hover { background-color: #3b4b75; color: #ffffff; }
         .btn-fulfill { background-color: #10b981; color: #05070f; }
         .btn-fulfill:hover { background-color: #059669; }
+        .status-tag { font-size: 0.85rem; font-weight: 700; color: #10b981; width: 100%; text-align: center; padding: 0.4rem; }
 
         /* LOADING & EMPTY STATES */
-        .loading-view { text-align: center; padding: 5rem; color: #64748b; font-weight: 600; }
+        .loading-view { text-align: center; padding: 5rem; color: #64748b; font-weight: 600; grid-column: 1/-1; }
         
-        /* 🖨️ STRICT 26-CHAR NON-WRAP KOT PRINT MATRIX SYSTEM */
+        /* 🖨️ KOT PRINT CONFIGURATION */
         @media print {
             body * { display: none; }
             #kot-print-area { display: block !important; position: absolute; top: 0; left: 0; width: 58mm; font-family: 'Courier New', Courier, monospace; color: #000000; background: #ffffff; padding: 0; margin: 0; }
@@ -186,24 +236,34 @@
         <header>
             <div class="brand-meta">
                 <h1>The Velvet Lounge</h1>
-                <p><i class="fa-solid fa-circle" style="color:#10b981; font-size:0.7rem; animation: pulse 2s infinite;"></i> Autonomous Kitchen Display Stream (7s Sync)</p>
+                <p><i class="fa-solid fa-circle" style="color:#10b981; font-size:0.7rem;"></i> Terminal Display System (7s Sync)</p>
             </div>
+            <!-- 🔄 BULLETPROOF CLOSING RESET BUTTON -->
+            <button class="btn-reset-session" onclick="triggerClosingReset()">
+                <i class="fa-solid fa-dumpster-fire"></i> Closing Reset (Clear Day)
+            </button>
         </header>
 
         <!-- ANALYTICS HIGHLIGHTS LOGS -->
         <div class="analytics-strip">
             <div class="stat-card">
                 <p>Live Active KOTs</p>
-                <h3 id="stat-active-count">0 Orders</h3>
+                <h3 id="stat-active-count">0 Pending</h3>
             </div>
             <div class="stat-card">
                 <p>Today's Total Orders</p>
-                <h3 id="stat-total-count">0 Logged</h3>
+                <h3 id="stat-total-count">0 Orders</h3>
             </div>
             <div class="stat-card">
                 <p>Gross Volume Today</p>
                 <h3 id="stat-gross-revenue">₹0.00</h3>
             </div>
+        </div>
+
+        <!-- 📑 SUB-TABS TO CONTOL VIEW MODE -->
+        <div class="view-tabs">
+            <button class="tab-trigger active" id="tab-active" onclick="switchViewTab('active')">Active KOTs</button>
+            <button class="tab-trigger" id="tab-history" onclick="switchViewTab('history')">Order History (Past Log)</button>
         </div>
 
         <!-- LIVE ORDERS LIVE CONTAINER -->
@@ -216,7 +276,6 @@
     <div id="kot-print-area" style="display: none;"></div>
 
     <script>
-        // CORE INTEGRATION ENDPOINTS
         const SPREADSHEET_ID = "11GI3zgBG6Zgjy45v2SIeu6QF7c8xIyNoQvtI92P58ME";
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQRFRcgFrTnbEZ5nDaIj0a-K221Kd5nf9qKBr9o5UMGTawayj_fgIOBttw3okYMMo/exec";
         const MASTER_PIN = "2580";
@@ -224,6 +283,7 @@
         let currentPinInput = "";
         let securityAttempts = 0;
         let globalOrdersCache = [];
+        let currentViewMode = "active"; // 'active' or 'history'
 
         // PIN-PAD INTERFACE SYSTEM
         function pressPin(num) {
@@ -248,16 +308,13 @@
                 securityAttempts++;
                 alert(`Access Denied. Invalid PIN Code. (${securityAttempts}/3)`);
                 clearPin();
-                if (securityAttempts >= 3) {
-                    window.location.href = "index.html"; // Redirect intruders automatically
-                }
+                if (securityAttempts >= 3) window.location.href = "index.html";
             }
         }
 
-        // LIVE MONITORING LOOP CONFIGURATION
         function startLiveKdsEngine() {
             fetchLiveOrdersFromCloud();
-            setInterval(fetchLiveOrdersFromCloud, 7000); // 7-Second Stream Refresh Matrix
+            setInterval(fetchLiveOrdersFromCloud, 7000); 
         }
 
         async function fetchLiveOrdersFromCloud() {
@@ -278,21 +335,29 @@
             }
         }
 
-        // DYNAMIC COLUMN MAPPING ARRAY MATRIX ENGINE
+        // 🔍 FAILSAFE COLUMN DETECTION ENGINE (Never displays 0 due to header mismatch)
         function processOrdersLogRows(rows) {
             if (rows.length === 0) return;
 
-            // Extract exact column indices dynamically via text headers
             const headers = rows[0].c.map(cell => cell && cell.v ? cell.v.toString().trim().toLowerCase() : "");
             
-            const idIdx = headers.indexOf("order id") !== -1 ? headers.indexOf("order id") : 0;
-            const nameIdx = headers.findIndex(h => h.includes("name") || h.includes("customer"));
-            const tableIdx = headers.findIndex(h => h.includes("table"));
-            const itemsIdx = headers.findIndex(h => h.includes("item"));
-            const totalIdx = headers.findIndex(h => h.includes("total") || h.includes("price"));
-            const statusIdx = headers.indexOf("status");
+            // Failsafe mappings to avoid index breaks
+            let idIdx = headers.findIndex(h => h.includes("id"));
+            let nameIdx = headers.findIndex(h => h.includes("name") || h.includes("customer"));
+            let tableIdx = headers.findIndex(h => h.includes("table"));
+            let itemsIdx = headers.findIndex(h => h.includes("item"));
+            let totalIdx = headers.findIndex(h => h.includes("total") || h.includes("price") || h.includes("amount"));
+            let statusIdx = headers.indexOf("status");
 
-            let pendingOrders = [];
+            if (idIdx === -1) idIdx = 0;
+            if (nameIdx === -1) nameIdx = 1;
+            if (tableIdx === -1) tableIdx = 2;
+            if (itemsIdx === -1) itemsIdx = 3;
+            if (totalIdx === -1) totalIdx = 4;
+            if (statusIdx === -1) statusIdx = headers.length > 5 ? 5 : -1;
+
+            let allOrders = [];
+            let activeCount = 0;
             let totalLoggedCount = 0;
             let totalGrossRevenue = 0;
 
@@ -306,127 +371,83 @@
                     table: cells[tableIdx] && cells[tableIdx].v ? cells[tableIdx].v.toString() : "00",
                     items: cells[itemsIdx] && cells[itemsIdx].v ? cells[itemsIdx].v.toString() : "",
                     total: cells[totalIdx] && cells[totalIdx].v ? parseFloat(cells[totalIdx].v.toString().replace(/[^0-9.]/g, '')) : 0,
-                    status: cells[statusIdx] && cells[statusIdx].v ? cells[statusIdx].v.toString().trim() : "Pending"
+                    status: (statusIdx !== -1 && cells[statusIdx] && cells[statusIdx].v) ? cells[statusIdx].v.toString().trim() : "Pending"
                 };
 
                 totalLoggedCount++;
                 totalGrossRevenue += order.total;
-
-                // Only queue into active UI grid if status parameter does not read 'Fulfilled'
                 if (order.status.toLowerCase() !== "fulfilled") {
-                    pendingOrders.push(order);
+                    activeCount++;
                 }
+
+                allOrders.push(order);
             }
 
-            globalOrdersCache = pendingOrders;
+            globalOrdersCache = allOrders;
             
-            // Sync Analytics Counter UI Element Nodes
-            document.getElementById('stat-active-count').innerText = `${pendingOrders.length} Pending`;
+            // Sync Counter UI Elements accurately
+            document.getElementById('stat-active-count').innerText = `${activeCount} Pending`;
             document.getElementById('stat-total-count').innerText = `${totalLoggedCount} Orders`;
             document.getElementById('stat-gross-revenue').innerText = `₹${totalGrossRevenue.toFixed(2)}`;
 
-            renderKdsGrid(pendingOrders);
+            renderKdsGrid();
         }
 
-        function renderKdsGrid(orders) {
+        // TOGGLE SWITCH TABS
+        function switchViewTab(mode) {
+            currentViewMode = mode;
+            document.getElementById('tab-active').classList.toggle('active', mode === 'active');
+            document.getElementById('tab-history').classList.toggle('active', mode === 'history');
+            renderKdsGrid();
+        }
+
+        function renderKdsGrid() {
             const grid = document.getElementById('orders-live-grid');
-            if (orders.length === 0) {
-                grid.innerHTML = `<div class="loading-view" style="grid-column: 1/-1; color: #10b981;"><i class="fa-solid fa-circle-check" style="font-size:2rem; margin-bottom:1rem; display:block;"></i>All Kitchen Orders Fulfilled!</div>`;
+            grid.innerHTML = "";
+
+            // Filter cache data based on the current view tab selection
+            const filteredOrders = globalOrdersCache.filter(order => {
+                if (currentViewMode === "active") {
+                    return order.status.toLowerCase() !== "fulfilled";
+                } else {
+                    return order.status.toLowerCase() === "fulfilled";
+                }
+            });
+
+            if (filteredOrders.length === 0) {
+                grid.innerHTML = currentViewMode === "active" 
+                    ? `<div class="loading-view" style="color: #10b981;"><i class="fa-solid fa-circle-check" style="font-size:2rem; margin-bottom:1rem; display:block;"></i>All Kitchen Orders Fulfilled!</div>`
+                    : `<div class="loading-view">No past fulfilled logs found for today.</div>`;
                 return;
             }
 
-            grid.innerHTML = "";
-            orders.forEach(order => {
+            filteredOrders.forEach(order => {
                 const card = document.createElement('div');
-                card.className = "order-card";
+                card.className = `order-card ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-style' : ''}`;
                 card.id = `order-card-${order.id}`;
+                
+                let actionHtml = "";
+                if (order.status.toLowerCase() !== "fulfilled") {
+                    actionHtml = `
+                        <div class="card-actions">
+                            <button class="btn btn-print" onclick="executeKotThermalPrint('${order.id}')"><i class="fa-solid fa-print"></i> KOT</button>
+                            <button class="btn btn-fulfill" onclick="triggerMarkFulfilledAction('${order.id}')"><i class="fa-solid fa-check"></i> Fulfill</button>
+                        </div>
+                    `;
+                } else {
+                    actionHtml = `
+                        <div class="card-actions">
+                            <div class="status-tag"><i class="fa-solid fa-circle-check"></i> Fulfilled & Dispatched</div>
+                        </div>
+                    `;
+                }
+
                 card.innerHTML = `
                     <div class="card-header">
                         <span class="order-id">#${order.id}</span>
-                        <span class="table-badge">Table ${order.table}</span>
+                        <span class="table-badge ${order.status.toLowerCase() === "fulfilled" ? 'fulfilled-badge' : ''}">Table ${order.table}</span>
                     </div>
                     <div class="card-body">
                         <div class="cust-name">${order.name}</div>
                         <div class="items-list">${order.items}</div>
                         <div class="order-total">Total Amount: ₹${order.total.toFixed(2)}</div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-print" onclick="executeKotThermalPrint('${order.id}')"><i class="fa-solid fa-print"></i> KOT</button>
-                        <button class="btn btn-fulfill" onclick="triggerMarkFulfilledAction('${order.id}')"><i class="fa-solid fa-check"></i> Fulfill</button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // 🍳 ACTION 1: KITCHEN DISPLAY MARK FULFILLED TRANSITION ENGINE
-        async function triggerMarkFulfilledAction(orderId) {
-            const card = document.getElementById(`order-card-${orderId}`);
-            if (card) {
-                card.style.opacity = '0.3';
-                card.style.transform = 'scale(0.95)';
-                card.style.pointerEvents = 'none'; // Lock double dispatch execution clicks
-            }
-
-            try {
-                // Post asynchronous payload signal payload directly to updated sheet endpoint 
-                await fetch(APPS_SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors", 
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({
-                        action: "updateStatus",
-                        orderId: orderId,
-                        status: "Fulfilled"
-                    })
-                });
-
-                if (card) card.remove();
-                
-                // Flush tracking state immediately from local instance array list mapping structure
-                globalOrdersCache = globalOrdersCache.filter(o => o.id !== orderId);
-                document.getElementById('stat-active-count').innerText = `${globalOrdersCache.length} Pending`;
-                if (globalOrdersCache.length === 0) renderKdsGrid([]);
-
-            } catch (error) {
-                alert("Cloud Synchronization Failed. Re-verifying server availability parameters.");
-                if (card) { card.style.opacity = '1'; card.style.transform = 'none'; card.style.pointerEvents = 'auto'; }
-            }
-        }
-
-        // 🖨️ ACTION 2: 1-TAP 58mm KOT THERMAL PRINTING (STRICT 26-CHAR NON-WRAP MATRIX ENGINE)
-        function executeKotThermalPrint(orderId) {
-            const order = globalOrdersCache.find(o => o.id === orderId);
-            if (!order) return;
-
-            const printArea = document.getElementById('kot-print-area');
-            
-            // Format content into a clean 26-character fixed matrix grid blueprint
-            let kotText = `==========================\n`;
-            kotText += `      KITCHEN ORDER       \n`;
-            kotText += `==========================\n`;
-            kotText += `Order ID : #${order.id.padEnd(13)}\n`;
-            kotText += `Table No : T-${order.table.padEnd(12)}\n`;
-            kotText += `Cust Name: ${order.name.substring(0, 14).padEnd(14)}\n`;
-            kotText += `--------------------------\n`;
-            kotText += `ITEMS LOGS:\n`;
-
-            // Break user custom string arrays cleanly to fit width boundaries without standard CSS wrap
-            const itemsLines = order.items.split('\n');
-            itemsLines.forEach(line => {
-                if(line.trim() !== "") {
-                    // Maximum 26 characters processing allocation line parameters
-                    kotText += `• ${line.substring(0, 24)}\n`;
-                }
-            });
-            
-            kotText += `==========================\n`;
-            kotText += `   DIGICONVO KDS SYSTEM   \n`;
-            kotText += `==========================\n\n\n\n`;
-
-            printArea.innerHTML = `<pre class="kot-pre">${kotText}</pre>`;
-            window.print();
-        }
-    </script>
-</body>
-</html>
