@@ -136,7 +136,7 @@
         .prod-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
         
         /* ⚡ HAPPY HOUR VISUAL DESIGN SYSTEM */
-        .prod-price { font-size: 1.1rem; font-weight: 800; color: #c5a880; display: flex; align-items: center; gap: 0.4rem; }
+        .prod-price { font-size: 1.1rem; font-weight: 800; color: #c5a880; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .old-price { font-size: 0.85rem; font-weight: 500; color: #64748b; text-decoration: line-through; }
         .happy-hour-badge {
             background-color: rgba(239, 68, 68, 0.15);
@@ -152,6 +152,7 @@
             align-items: center;
             gap: 0.2rem;
             margin-top: 0.25rem;
+            width: max-content;
         }
         
         /* ADD BUTTON SYSTEM */
@@ -268,6 +269,11 @@
         let activeCategory = "";
         let cartState = {};
 
+        // Helper function to format price cleanly (shows decimals only when they exist)
+        function formatPrice(num) {
+            return Number.isInteger(num) ? num.toString() : num.toFixed(2);
+        }
+
         window.onload = function() {
             const storedName = localStorage.getItem('digiconvo_cust_name');
             const storedTable = localStorage.getItem('digiconvo_table_no');
@@ -322,10 +328,10 @@
         function processRawRows(rows) {
             const parsedData = rows.map(row => {
                 const cells = row.c || [];
-                const finalPrice = cells[3] && cells[3].v ? parseInt(cells[3].v.toString().replace(/[^0-9]/g, '')) : 0;
                 
-                // 🔄 READ NEW COLUMN F (Base Price) - Fallback to Final Price if empty
-                const basePrice = cells[5] && cells[5].v ? parseInt(cells[5].v.toString().replace(/[^0-9]/g, '')) : finalPrice;
+                // 🔍 FLOATING-POINT SAFE PARSING (Retains dot and decimals safely)
+                const finalPrice = cells[3] && cells[3].v !== null ? parseFloat(cells[3].v) : 0;
+                const basePrice = cells[5] && cells[5].v !== null ? parseFloat(cells[5].v) : finalPrice;
 
                 return {
                     category: cells[0] && cells[0].v ? cells[0].v.toString().trim() : "Uncategorized",
@@ -395,11 +401,11 @@
                     `;
                 }
 
-                // 🔥 AUTONOMOUS HAPPY HOUR INTERCEPTOR 
+                // 🔥 ACCURATE DISCOUNT COMPARISON (Float Friendly)
                 const hasDiscount = item.basePrice > item.price;
                 const priceDisplayHtml = hasDiscount 
-                    ? `<span class="old-price">₹${item.basePrice}</span>₹${item.price}`
-                    : `₹${item.price}`;
+                    ? `<span class="old-price">₹${formatPrice(item.basePrice)}</span> ₹${formatPrice(item.price)}`
+                    : `₹${formatPrice(item.price)}`;
                 
                 const badgeHtml = hasDiscount
                     ? `<div class="happy-hour-badge"><i class="fa-solid fa-fire"></i> Happy Hour</div>`
@@ -453,7 +459,7 @@
             if (count > 0) {
                 strip.style.display = 'flex';
                 document.getElementById('strip-count').innerText = `${count} ${count > 1 ? 'Items' : 'Item'} Selected`;
-                document.getElementById('strip-total').innerText = `Total: ₹${total}`;
+                document.getElementById('strip-total').innerText = `Total: ₹${formatPrice(total)}`;
             } else {
                 strip.style.display = 'none';
             }
